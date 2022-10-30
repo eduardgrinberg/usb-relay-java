@@ -1,0 +1,224 @@
+@startuml
+
+' variables for diagram
+!$tenant_id_header 			= "X-Tenant-Id"
+!$tenant_id_example 		= "SomeCustomerId"
+!$telephony_id_header 		= "X-Telephony-System-Id"
+!$telephony_id_example 		= "SomeTelephonySystemId"
+!$correlation_key_header 	= "X-Correlation-Key"
+!$correlation_key_example 	= "SomeCorrelationKey"
+
+!$imp_ip					= "10.10.10.1"
+!$vrsp_ip					= "10.10.10.2"
+!$imr_ip					= "10.10.10.3"
+!$recorder_ip					= "10.10.10.4"
+
+!$imp_rtp_port_0			= 5000
+!$imp_rtp_port_1			= $imp_rtp_port_0 + 2
+!$imp_rtp_label_0			= "5555555555"
+!$imp_rtp_label_1			= "666666666"
+!$imr_rtp_port_0			= 7000
+!$imr_rtp_port_1			= $imr_rtp_port_0 + 2
+!$imr_rtp_label_0			= "989898"
+!$imr_rtp_label_1			= "87878787"
+
+!$imr_side_inactive_ip		= "0.0.0.0"
+
+
+!procedure $msg_siprec_invite($from_ip, $to_ip, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec, $has_xml)
+INVITE sip:$to_ip:5060 SIP/2.0
+$msg_sip_body1($from_ip, $to_ip, $from_ip, $display_sdp, $display_xml && $has_xml, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec)
+!endprocedure
+
+!procedure $msg_siprec_invite2($from_ip, $to_ip, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec, $has_xml, $callId)
+INVITE sip:$to_ip:5060 SIP/2.0
+$msg_sip_body2($from_ip, $to_ip, $from_ip, $display_sdp, $display_xml && $has_xml, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec, $callId)
+!endprocedure
+
+!procedure $msg_siprec_200ok($from_ip, $to_ip, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec)
+SIP/2.0 200 Ok
+$msg_sip_body1($from_ip, $to_ip, $to_ip, $display_sdp, %false(), $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec)
+!endprocedure
+
+!procedure $msg_siprec_200ok2($from_ip, $to_ip, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec, $callId)
+SIP/2.0 200 Ok
+$msg_sip_body2($from_ip, $to_ip, $to_ip, $display_sdp, %false(), $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec, $callId)
+!endprocedure
+
+!procedure $msg_siprec_100trying($from_ip, $to_ip, $siprec)
+SIP/2.0 100 Trying
+$msg_sip_body1($from_ip, $to_ip, $to_ip, %false(), %false(), "", "", "", "", "", "", "", $siprec)
+!endprocedure
+
+!procedure $msg_siprec_100trying2($from_ip, $to_ip, $siprec)
+SIP/2.0 100 Trying
+$msg_sip_body2($from_ip, $to_ip, $to_ip, %false(), %false(), "", "", "", "", "", "", "", $siprec, "1")
+!endprocedure
+
+!procedure $msg_siprec_504timeout($from_ip, $to_ip, $siprec)
+SIP/2.0 504 Gateway Timeout
+$msg_sip_body1($from_ip, $to_ip, $to_ip, %false(), %false(), "", "", "", "", "", "", "", $siprec)
+!endprocedure
+
+!procedure $msg_siprec_504timeout1($from_ip, $to_ip, $siprec)
+SIP/2.0 504 Gateway Timeout
+$msg_sip_body2($from_ip, $to_ip, $to_ip, %false(), %false(), "", "", "", "", "", "", "", $siprec,"1")
+!endprocedure
+
+!procedure $msg_siprec_ack($from_ip, $to_ip, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec)
+ACK sip:$to_ip:5060 SIP/2.0
+$msg_sip_body1($from_ip, $to_ip, $from_ip, %false(), %false(), $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec)
+!endprocedure
+
+!procedure $msg_siprec_ack1($from_ip, $to_ip, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec)
+ACK sip:$to_ip:5060 SIP/2.0
+$msg_sip_body2($from_ip, $to_ip, $from_ip, %false(), %false(), $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec, "1")
+!endprocedure
+
+!procedure $msg_siprec_bye($from_ip, $to_ip, $siprec)
+BYE sip:$to_ip:5060 SIP/2.0
+$msg_sip_body1($from_ip, $to_ip, $from_ip, %false(), %false(), "", "", "", "", "", "", "", $siprec)
+!endprocedure
+
+!procedure $msg_sip_body1($from_ip, $to_ip, $contact_ip, $has_sdp, $has_xml, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec)
+	|=SIP Header |=Header Value|
+	|Via: |SIP/2.0/TCP $from_ip:5060;branch=z9hG4bK8otherstuffhere|
+	!if (%strlen($siprec) == 0)
+	|Call-ID: |<color blue>444444444444444444@4.4.4.4</color> |
+	!else
+	|Call-ID: |<color blue>888888888888888888@8.8.8.8</color> |
+	!endif
+	|To: |<sip:$to_ip:5060;transport=tcp> |
+	|From: |sip:acmeSrc@$from_ip:5060;tag=69dab6b687 |
+	!if (%strlen($siprec) == 0)
+	|Contact: |<sip:acmeSrc@$contact_ip:5060;transport=tcp> |
+	|Require: | |
+	!else
+	|Contact: |<sip:acmeSrc@$contact_ip:5060;transport=tcp>;<color red>$siprec</color> |
+	|Require: |<color red>siprec</color> |
+	!endif
+	|$tenant_id_header: |<color blue>$tenant_id_example</color> |
+	|$telephony_id_header: |<color blue>$telephony_id_example</color> |
+	|$correlation_key_header: |<color blue>$correlation_key_example</color> |
+	
+	!if ($has_sdp) && (%strlen($rtp_ep1) > 0)
+	SDP
+	|_ SDP media description #1
+		|_ RTP endpoint IP:Port - $rtp_ep1
+		|_ RTCP endpoint IP:Port (default is same RTP IP and port + 1)
+		|_ Codecs:  $codecs1
+		!if ($has_xml) && (%strlen($siprec) > 0)
+		|_ <color purple>Label: $label1</color>
+		!else
+		|_ Label: $label1
+		!endif
+		|_ Direction: $direction
+	|_ SDP media description #2
+		|_ RTP endpoint IP:Port - $rtp_ep2
+		|_ RTCP endpoint IP:Port (default is same RTP IP and port + 1)
+		|_ Codecs:  $codecs2
+		!if ($has_xml) && (%strlen($siprec) > 0)
+		|_ <color purple>Label: $label2</color>
+		!else
+		|_ Label: $label2
+		!endif
+		|_ Direction: $direction
+	!endif
+	
+	!if ($has_xml) && (%strlen($siprec) > 0)
+	SIPREC XML
+	|_Session (identified by session ID)
+		|_UCID or other session level info
+	|_Participant #1 (identified by participant ID)
+		|_nameID - full SIP endpoint URI
+		|_name - endpoint user name / usually phone #
+		|_send - reference to the Stream ID (<send> tag contains stream ID)
+	|_Participant #2 (identified by participant ID)
+		|_nameID - full SIP endpoint URI
+		|_name - endpoint user name / usually phone #
+		|_send - reference to the Stream ID (<send> tag contains stream ID)
+	|_Stream #1 (identified by stream ID)
+		|_<color purple>label - SDP Label reference (<label> tag contains SDP media descriptor label)</color>
+	|_Stream #2 (identified by stream ID)
+		|_<color purple>label - SDP Label reference (<label> tag contains SDP media descriptor label)</color>
+	
+	!endif
+	
+!endprocedure
+
+!procedure $msg_sip_body2($from_ip, $to_ip, $contact_ip, $has_sdp, $has_xml, $rtp_ep1, $codecs1, $label1, $rtp_ep2, $codecs2, $label2, $direction, $siprec, $callId)
+	|=SIP Header |=Header Value|
+	|Via: |SIP/2.0/TCP $from_ip:5060;branch=z9hG4bK8otherstuffhere|
+        !if (%strlen($callId) == 1)
+	|Call-ID: |<color blue>77777777777777777@7.7.7.7</color> |
+	!endif
+	|To: |<sip:$to_ip:5060;transport=tcp> |
+	|From: |sip:acmeSrc@$from_ip:5060;tag=69dab6b687 |
+	!if (%strlen($siprec) == 0)
+	|Contact: |<sip:acmeSrc@$contact_ip:5060;transport=tcp> |
+	|Require: | |
+	!else
+	|Contact: |<sip:acmeSrc@$contact_ip:5060;transport=tcp>;<color red>$siprec</color> |
+	|Require: |<color red>siprec</color> |
+	!endif
+	|$tenant_id_header: |<color blue>$tenant_id_example</color> |
+	|$telephony_id_header: |<color blue>$telephony_id_example</color> |
+	|$correlation_key_header: |<color blue>$correlation_key_example</color> |
+	
+	!if ($has_sdp) && (%strlen($rtp_ep1) > 0)
+	SDP
+	|_ SDP media description #1
+		|_ RTP endpoint IP:Port - $rtp_ep1
+		|_ RTCP endpoint IP:Port (default is same RTP IP and port + 1)
+		|_ Codecs:  $codecs1
+		!if ($has_xml) && (%strlen($siprec) > 0)
+		|_ <color purple>Label: $label1</color>
+		!else
+		|_ Label: $label1
+		!endif
+		|_ Direction: $direction
+	|_ SDP media description #2
+		|_ RTP endpoint IP:Port - $rtp_ep2
+		|_ RTCP endpoint IP:Port (default is same RTP IP and port + 1)
+		|_ Codecs:  $codecs2
+		!if ($has_xml) && (%strlen($siprec) > 0)
+		|_ <color purple>Label: $label2</color>
+		!else
+		|_ Label: $label2
+		!endif
+		|_ Direction: $direction
+	!endif
+	
+	!if ($has_xml) && (%strlen($siprec) > 0)
+	SIPREC XML
+	|_Session (identified by session ID)
+		|_UCID or other session level info
+	|_Participant #1 (identified by participant ID)
+		|_nameID - full SIP endpoint URI
+		|_name - endpoint user name / usually phone #
+		|_send - reference to the Stream ID (<send> tag contains stream ID)
+	|_Participant #2 (identified by participant ID)
+		|_nameID - full SIP endpoint URI
+		|_name - endpoint user name / usually phone #
+		|_send - reference to the Stream ID (<send> tag contains stream ID)
+	|_Stream #1 (identified by stream ID)
+		|_<color purple>label - SDP Label reference (<label> tag contains SDP media descriptor label)</color>
+	|_Stream #2 (identified by stream ID)
+		|_<color purple>label - SDP Label reference (<label> tag contains SDP media descriptor label)</color>
+	
+	!endif
+	
+!endprocedure
+
+
+
+!theme reddress-lightblue from https://raw.githubusercontent.com/plantuml/plantuml/master/themes
+skinparam defaultFontSize 14
+skinparam ParticipantFontSize 14
+skinparam ArrowFontSize 13
+skinparam NoteBackgroundColor #gold
+participant "IMP (SBC or SIPREC Client)" as imp #lightgreen
+participant "Lite VRSP" as vrsp #lightblue
+participant "IMR (ESFU)" as imr #lightgreen
+
+@enduml
